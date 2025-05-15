@@ -92,20 +92,31 @@ class WinConnector {
     return result;
   }
 
-  List<dynamic> _dataParser(event) {
-    var data = String.fromCharCodes(event);
+  List<dynamic> _dataParser(List<int> event) {
     List<dynamic> list = [];
-    var cursor = 0;
-    while (cursor < data.length) {
-      var length = _fromBytesToInt32(event[cursor + 0], event[cursor + 1],
-          event[cursor + 2], event[cursor + 3]);
+    int cursor = 0;
+
+    while (cursor + 4 <= event.length) {
+      int length = _fromBytesToInt32(
+        event[cursor + 0],
+        event[cursor + 1],
+        event[cursor + 2],
+        event[cursor + 3],
+      );
+
       cursor += 4;
-      String payload = data.substring(cursor, cursor + length);
+
+      // Ensure enough bytes remain for the payload
+      if (cursor + length > event.length) break;
+
+      List<int> payloadBytes = event.sublist(cursor, cursor + length);
       cursor += length;
+
+      String payload = utf8.decode(payloadBytes);
       var jsonData = json.decode(payload);
       list.add(jsonData);
     }
-    if (cursor != data.length) return [];
+
     return list;
   }
 
